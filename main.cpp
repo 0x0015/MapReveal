@@ -1,9 +1,54 @@
+#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <iostream>
 #include "openFile.hpp"
 #include "editMask.hpp"
 #include "reportError.hpp"
+
+void openShadowImage(SDL_Surface** mask){
+	std::string maskName = openFile();
+	SDL_FreeSurface(*mask);
+	*mask =  IMG_Load(maskName.c_str());
+}
+void saveShadowImage(SDL_Surface* mask, std::string imageName){
+	std::string actualFilename = saveFile(imageName + "_mask.bmp");
+	SDL_SaveBMP(mask, actualFilename.c_str());
+}
+void resizeWindows(SDL_Window* window1, SDL_Window* window2, SDL_Surface* Image){
+	int Window1X;
+	int Window1Y;
+	SDL_GetWindowSize(window1, &Window1X, &Window1Y);
+	int Window2X;
+	int Window2Y;
+	SDL_GetWindowSize(window2, &Window2X, &Window2Y);
+
+	float ImageWH = ((float)Image->w)/((float)Image->h);
+	float ImageHW = ((float)Image->h)/((float)Image->w);
+	
+	int newWindow1X;
+	int newWindow1Y;
+	if(Window1X >= Window1Y){
+		newWindow1X = Window1X;
+		newWindow1Y = (int)(((float)Window1X)*ImageHW);
+	}else{
+		newWindow1Y = Window1Y;
+		newWindow1X = (int)(((float)Window1Y)*ImageWH);
+	}
+
+	int newWindow2X;
+	int newWindow2Y;
+	if(Window2X >= Window2Y){
+		newWindow2X = Window2X;
+		newWindow2Y = (int)(((float)Window2X)*ImageHW);
+	}else{
+		newWindow2Y = Window2Y;
+		newWindow2X = (int)(((float)Window2Y)*ImageWH);
+	}
+
+	SDL_SetWindowSize(window1, newWindow1X, newWindow1Y);
+	SDL_SetWindowSize(window2, newWindow2X, newWindow2Y);
+}
 
 int main()
 {
@@ -16,6 +61,7 @@ int main()
 	}
 	
 	SDL_Event event;
+	SDL_SetMainReady();
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
     {
         std::cout << "Failed to initialize the SDL2 library"<<std::endl;
@@ -95,7 +141,7 @@ int main()
    SDL_SetSurfaceBlendMode(Image, SDL_BLENDMODE_BLEND);
    SDL_SetSurfaceBlendMode(Mask, SDL_BLENDMODE_NONE);
 
-
+	resizeWindows(window1, window2, Image);
 
     bool quit = false;
 
@@ -120,6 +166,24 @@ int main()
 	    }
 }
 	
+	const Uint8* kb = SDL_GetKeyboardState(NULL);
+	if(kb[SDL_SCANCODE_O]){
+		//to open mask file;
+		openShadowImage(&Mask);
+	}
+	if(kb[SDL_SCANCODE_S]){
+		//to save mask file;
+		saveShadowImage(Mask, imageName);
+	}
+	if(kb[SDL_SCANCODE_SPACE] || kb[SDL_SCANCODE_ESCAPE]){
+		//help
+		tinyfd_messageBox("Help", "Controls:  use the mousewheel to controll the cursor size.  Press R to reset window size.  Press O to open a saved mask file, and S to save the mask to a file.  Press Escape or Space for help(this).", "ok", "help" , 1);
+
+	}
+	if(kb[SDL_SCANCODE_R]){
+		resizeWindows(window1, window2, Image);
+	}
+	
 	int mouseX;
 	int mouseY;
 
@@ -134,21 +198,21 @@ int main()
 	int ajustedMouseY = (int)(((float)mouseY/(float)focusWindowY)*(float)Image->h);
 
 	if(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_LEFT)){
-		std::cout<<"Found mouse button 1 is pressed at: (";
-		std::cout<<mouseX;
-		std::cout<<", ";
-		std::cout<<mouseY;
-		std::cout<<")"<<std::endl;
+		//std::cout<<"Found mouse button 1 is pressed at: (";
+		//std::cout<<mouseX;
+		//std::cout<<", ";
+		//std::cout<<mouseY;
+		//std::cout<<")"<<std::endl;
 
 		set_pixel(Mask, fillAmount, ajustedMouseX, ajustedMouseY, 255, 255, 255, 0);
 	}
 
 	if(SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(SDL_BUTTON_RIGHT)){
-		std::cout<<"Found mouse button 1 is pressed at: (";
-		std::cout<<mouseX;
-		std::cout<<", ";
-		std::cout<<mouseY;
-		std::cout<<")"<<std::endl;
+		//std::cout<<"Found mouse button 1 is pressed at: (";
+		//std::cout<<mouseX;
+		//std::cout<<", ";
+		//std::cout<<mouseY;
+		//std::cout<<")"<<std::endl;
 	
 		set_pixel(Mask, fillAmount, ajustedMouseX, ajustedMouseY, 0, 0, 0, 255);
 	}
